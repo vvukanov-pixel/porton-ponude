@@ -85,6 +85,7 @@
       <input id="broj" />
       <button class="btn btn-x" onclick="noviBroj()">Novi broj</button>
     </div>
+    <button class="btn btn-red" style="margin-top:8px" onclick="novaPonuda()">Nova ponuda (obriši sve)</button>
     <label>Kupac</label>
     <input id="kupac" placeholder="Ime i prezime / firma" oninput="render()" />
     <label>Mjesto</label>
@@ -255,8 +256,20 @@ function nextBroj(){
 }
 function prazna(){ return {model:"filo_muro",dekor:"Bijelo mat",sirina:"80",visina:"210",stok:"107",kom:"1",dodaci:[]}; }
 
-let stavke = [prazna()];
+let stavke = [];
 
+function novaPonuda(){
+  document.getElementById("kupac").value = "";
+  document.getElementById("napomena").value = "";
+  document.getElementById("postotak").value = "0";
+  document.getElementById("montazaKom").value = "";
+  document.getElementById("dostavaKom").value = "";
+  document.getElementById("datum").value = today();
+  stavke = [];
+  document.getElementById("broj").value = nextBroj();
+  paintStavke();
+  render();
+}
 function noviBroj(){ document.getElementById("broj").value = nextBroj(); render(); }
 function dodaj(){ stavke.push(prazna()); paintStavke(); render(); }
 function del(i){ stavke.splice(i,1); paintStavke(); render(); }
