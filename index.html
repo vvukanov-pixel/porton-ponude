@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PORTON ponude</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #e8e6e1; font-family: Arial, Helvetica, sans-serif; color: #111; }
+    .app { display: grid; grid-template-columns: 400px 1fr; min-height: 100vh; }
+    .panel { background: #1a1a2e; color: #fff; padding: 18px 16px 36px; overflow-y: auto; max-height: 100vh; }
+    .panel h1 { font-size: 18px; }
+    .sub { color: #c9c9d4; font-size: 12px; margin: 4px 0 14px; }
+    label { display: block; font-size: 10px; color: #c9c9d4; margin: 8px 0 3px; text-transform: uppercase; letter-spacing: .4px; }
+    input, select, textarea { width: 100%; padding: 7px 8px; border: 1px solid #3a3a55; background: #121225; color: #fff; border-radius: 4px; font-size: 13px; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+    .item { background: #121225; border: 1px solid #3a3a55; border-radius: 6px; padding: 8px; margin-top: 8px; }
+    .item .hd { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #c9c9d4; margin-bottom: 4px; }
+    .ok { color: #9fdfb3; font-size: 11px; margin-top: 4px; }
+    .warn { color: #ffb4b4; font-size: 11px; margin-top: 4px; }
+    .btn { border: 0; cursor: pointer; border-radius: 5px; padding: 9px 12px; font-weight: 700; font-size: 13px; }
+    .btn-red { background: #c41e3a; color: #fff; width: 100%; margin-top: 10px; }
+    .btn-g { background: #2d6a4f; color: #fff; width: 100%; margin-top: 8px; }
+    .btn-x { background: transparent; color: #fff; border: 1px solid #555; padding: 4px 8px; font-size: 11px; }
+    .preview { padding: 20px; display: flex; justify-content: center; }
+    .sheet { width: 210mm; min-height: 297mm; background: #fff; padding: 16mm 12mm 12mm; box-shadow: 0 8px 30px rgba(0,0,0,.18); position: relative; }
+    .memo { height: 40mm; }
+    .sheet h2 { font-size: 22px; }
+    .tl { font-size: 12px; margin-top: 4px; }
+    .tl b { color: #c41e3a; }
+    .meta { position: absolute; right: 12mm; top: 16mm; width: 77mm; border: .5px solid #aaa; font-size: 9px; }
+    .meta div { display: grid; grid-template-columns: 30mm 1fr; border-bottom: .5px solid #aaa; padding: 3.5px 6px; }
+    .meta div:last-child { border-bottom: 0; }
+    .kupac { margin-top: 6px; font-size: 12px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 9px; }
+    th { background: #1a1a2e; color: #fff; text-align: left; padding: 6px 4px; }
+    td { padding: 6px 4px; vertical-align: top; border-bottom: 1px solid #eee; }
+    tr:nth-child(even) td { background: #f5f5f5; }
+    .r { text-align: right; } .c { text-align: center; }
+    .totals { width: 75mm; margin: 10px 0 0 auto; border: .5px solid #888; font-size: 10px; }
+    .totals div { display: flex; justify-content: space-between; padding: 4px 8px; }
+    .grand { background: #c41e3a; color: #fff; font-weight: 700; }
+    .nap { margin-top: 12px; font-size: 9px; }
+    .nap b { color: #c41e3a; }
+    .foot { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+    .box { border: .5px solid #aaa; padding: 8px 10px; min-height: 22mm; font-size: 9px; }
+    .big { color: #c41e3a; font-size: 15px; font-weight: 700; margin-top: 4px; }
+    .sign { margin-top: 14px; font-size: 9px; }
+    @media print {
+      body { background: #fff; }
+      .panel { display: none !important; }
+      .app { display: block; }
+      .preview { padding: 0; }
+      .sheet { box-shadow: none; width: auto; }
+    }
+    @media (max-width: 980px) { .app { grid-template-columns: 1fr; } .panel { max-height: none; } }
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <h1>PORTON PONUDE</h1>
+    <p class="sub">Cjenik 2026/2027 · print spreman</p>
+
+    <label>Broj ponude</label>
+    <div class="row2">
+      <input id="broj" />
+      <button class="btn btn-x" onclick="noviBroj()">Novi broj</button>
+    </div>
+    <label>Kupac</label>
+    <input id="kupac" placeholder="Ime i prezime / firma" oninput="render()" />
+    <label>Mjesto</label>
+    <input id="grad" value="20000 DUBROVNIK" oninput="render()" />
+    <div class="row2">
+      <div><label>Datum</label><input id="datum" oninput="render()" /></div>
+      <div><label>Valjanost</label><input id="valjanost" value="15 dana" oninput="render()" /></div>
+    </div>
+    <label>Rok isporuke</label>
+    <input id="isporuka" value="30 radnih dana" oninput="render()" />
+    <label>Plaćanje</label>
+    <input id="placanje" value="70% avans, ostatak nakon ugradnje" oninput="render()" />
+    <label>Uvećanje cijene iz cjenika (%)</label>
+    <input id="postotak" type="number" value="0" oninput="render()" />
+
+    <div id="stavke"></div>
+    <button class="btn btn-g" onclick="dodaj()">+ Dodaj stavku</button>
+
+    <div class="row2">
+      <div><label>Montaža € / kom</label><input id="montaza" type="number" value="100" oninput="render()" /></div>
+      <div><label>Montaža kom (prazno = sva)</label><input id="montazaKom" type="number" placeholder="sva vrata" oninput="render()" /></div>
+    </div>
+    <div class="row2">
+      <div><label>Dostava € / kom</label><input id="dostava" type="number" value="10" oninput="render()" /></div>
+      <div><label>Dostava kom (prazno = sva)</label><input id="dostavaKom" type="number" placeholder="sva vrata" oninput="render()" /></div>
+    </div>
+    <label>Dodatna napomena</label>
+    <textarea id="napomena" rows="3" oninput="render()"></textarea>
+    <button class="btn btn-red" onclick="window.print()">Print / PDF</button>
+  </aside>
+  <div class="preview"><div class="sheet" id="sheet"></div></div>
+</div>
+
+<script>
+const FALC = {
+  "Bijelo mat":{107:370,130:388,150:400,190:427,230:485,280:547},
+  "Bijelo matrix":{107:380,130:398,150:412,190:440,230:513,280:577},
+  "Bijelo palisander":{107:393,130:409,150:422,190:451,230:525,280:590},
+  "Bijelo reflex":{107:407,130:426,150:439,190:476,230:542,280:597},
+  "Saten reflex":{107:419,130:446,150:460,190:496,230:565,280:618},
+  "Hrast pembroke":{107:426,130:453,150:466,190:null,230:573,280:629},
+  "Beton maloja":{107:416,130:436,150:447,190:null,230:551,280:608},
+  "Brijest":{107:403,130:422,150:434,190:null,230:538,280:597},
+  "Orah alter":{107:405,130:424,150:436,190:null,230:540,280:596},
+  "Palisandro blu":{107:424,130:445,150:456,190:null,230:560,280:617},
+  "Tortora":{107:420,130:441,150:458,190:null,230:555,280:613}
+};
+const FILO_IV = {
+  "Bijelo reflex":{107:512,130:537,150:558,190:593,230:663,280:726},
+  "Saten reflex":{107:514,130:540,150:560,190:595,230:665,280:728},
+  "Tortora":{107:530,130:544,150:571,190:null,230:674,280:740}
+};
+const FILO_SA = {
+  "Bijelo mat":{107:411,130:425,150:437,190:468,230:535,280:599},
+  "Lakirano bijelo sa ukladama":{107:736,130:750,150:762,190:791,230:863,280:926}
+};
+const MURO = {
+  "Argento":{lo:640,hi:960},
+  "Bijelo mat":{lo:660,hi:980},
+  "Crno mat":{lo:680,hi:1000}
+};
+const SLIDE = {
+  "Bijelo mat":{S2:570,S3:800},
+  "Bijelo matrix":{S2:573,S3:803},
+  "Bijelo palisander":{S2:579,S3:810},
+  "Bijelo reflex":{S2:594,S3:825},
+  "Saten reflex":{S2:597,S3:829},
+  "Hrast pembroke":{S2:607,S3:839},
+  "Beton maloja":{S2:597,S3:828},
+  "Brijest":{S2:582,S3:813},
+  "Orah alter":{S2:582,S3:813},
+  "Palisandro blu":{S2:598,S3:829},
+  "Tortora":{S2:602,S3:811}
+};
+const MODELI = [
+  ["filo_muro","FILO MURO"],
+  ["filo_iverica","FILO cjevasta iverica"],
+  ["filo_sace","FILO ispuna saće"],
+  ["falc","FALC ispuna saće"],
+  ["slide2","SLIDE 2"],
+  ["slide3","SLIDE 3"]
+];
+const STOK = ["107","130","150","190","230","280"];
+
+function dekori(m){
+  if(m==="filo_iverica") return Object.keys(FILO_IV);
+  if(m==="filo_sace") return Object.keys(FILO_SA);
+  if(m==="filo_muro") return Object.keys(MURO);
+  if(m.startsWith("slide")) return Object.keys(SLIDE);
+  return Object.keys(FALC);
+}
+function cijena(s){
+  const v = Number(s.visina)||210, st = s.stok;
+  if(s.model==="falc") return (FALC[s.dekor]||{})[st] ?? null;
+  if(s.model==="filo_iverica") return (FILO_IV[s.dekor]||{})[st] ?? null;
+  if(s.model==="filo_sace") return (FILO_SA[s.dekor]||{})[st] ?? null;
+  if(s.model==="filo_muro"){ const r=MURO[s.dekor]; return r ? (v>=215?r.hi:r.lo) : null; }
+  if(s.model==="slide2") return (SLIDE[s.dekor]||{}).S2 ?? null;
+  if(s.model==="slide3") return (SLIDE[s.dekor]||{}).S3 ?? null;
+  return null;
+}
+function opis(m){
+  return {
+    falc:["Sobna vrata FALC","Ispuna saće, 4K spojnice","magnetna brava"],
+    filo_iverica:["Sobna vrata FILO","Cjevasta iverica, skrivene","baglame, magnetna brava"],
+    filo_sace:["Sobna vrata FILO","Ispuna saće, skrivene","baglame, magnetna brava"],
+    filo_muro:["Vrata FILO MURO","Ispuna saće, skrivene baglame","magnet, ALU skriveni štok"],
+    slide2:["Klizna vrata SLIDE 2","Soft close, Al maska","ukopna ručka, saće"],
+    slide3:["Klizna vrata SLIDE 3","Skrivena vodilica soft close","ukopna ručka, saće"]
+  }[m] || ["Vrata"];
+}
+function stokTxt(s){
+  if(s.model==="filo_muro") return "skriveni ALU";
+  if(s.model.startsWith("slide")) return "bez dovratnika";
+  return (Number(s.stok)/10).toString().replace(".",",") + " cm";
+}
+function fmt(n){ return Number(n).toLocaleString("hr-HR",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function today(){
+  const d=new Date();
+  return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+"."+d.getFullYear()+".";
+}
+function nextBroj(){
+  const d=new Date();
+  const p="P-"+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");
+  const k="porton-broj-"+p;
+  let n=1;
+  try{ n=parseInt(localStorage.getItem(k)||"0",10)+1; localStorage.setItem(k,String(n)); }catch(e){}
+  return p+"-"+String(n).padStart(3,"0");
+}
+
+let stavke = [{model:"filo_muro",dekor:"Bijelo mat",sirina:"80",visina:"210",stok:"107",kom:"1"}];
+
+function noviBroj(){ document.getElementById("broj").value = nextBroj(); render(); }
+function dodaj(){ stavke.push({model:"filo_muro",dekor:"Bijelo mat",sirina:"80",visina:"210",stok:"107",kom:"1"}); paintStavke(); render(); }
+function del(i){ stavke.splice(i,1); if(!stavke.length) dodaj(); else { paintStavke(); render(); } }
+function setS(i,f,v){
+  stavke[i][f]=v;
+  if(f==="model"){
+    const d=dekori(v);
+    if(!d.includes(stavke[i].dekor)) stavke[i].dekor=d[0];
+    paintStavke();
+  }
+  render();
+}
+function val(id){ return document.getElementById(id).value; }
+
+function paintStavke(){
+  const box=document.getElementById("stavke");
+  box.innerHTML = stavke.map((s,i)=>{
+    const ds=dekori(s.model);
+    const base=cijena(s);
+    const needStok = s.model==="falc"||s.model==="filo_iverica"||s.model==="filo_sace";
+    return `<div class="item">
+      <div class="hd"><span>Stavka ${i+1}</span>${stavke.length>1?`<button class="btn btn-x" onclick="del(${i})">Ukloni</button>`:""}</div>
+      <label>Model</label>
+      <select onchange="setS(${i},'model',this.value)">${MODELI.map(([id,l])=>`<option value="${id}" ${s.model===id?"selected":""}>${l}</option>`).join("")}</select>
+      <label>Dekor</label>
+      <select onchange="setS(${i},'dekor',this.value)">${ds.map(d=>`<option ${s.dekor===d?"selected":""}>${d}</option>`).join("")}</select>
+      <div class="row3">
+        <div><label>Širina</label><input value="${s.sirina}" oninput="setS(${i},'sirina',this.value)"></div>
+        <div><label>Visina</label><input value="${s.visina}" oninput="setS(${i},'visina',this.value)"></div>
+        <div><label>Kom</label><input type="number" value="${s.kom}" oninput="setS(${i},'kom',this.value)"></div>
+      </div>
+      ${needStok?`<label>Štok mm</label><select onchange="setS(${i},'stok',this.value)">${STOK.map(t=>`<option ${s.stok===t?"selected":""}>${t}</option>`).join("")}</select>`:""}
+      ${base==null?`<div class="warn">Nema cijene u cjeniku za ovu kombinaciju.</div>`:
+        `<div class="ok">Cjenik ${fmt(base)} € → nakon % ${fmt(base*(1+(Number(val("postotak"))||0)/100))} €</div>`}
+    </div>`;
+  }).join("");
+}
+
+function render(){
+  const markup=(Number(val("postotak"))||0)/100;
+  const rows=stavke.map(s=>{
+    const base=cijena(s);
+    const cij=base==null?null:+(base*(1+markup)).toFixed(2);
+    const kom=Number(s.kom)||0;
+    return {...s,base,cij,kom,uk:cij==null?null:+(cij*kom).toFixed(2)};
+  });
+  const vrataKom=rows.reduce((a,r)=>a+r.kom,0);
+  const vrataIzn=rows.reduce((a,r)=>a+(r.uk||0),0);
+  const mKom = val("montazaKom")==="" ? vrataKom : Number(val("montazaKom"))||0;
+  const dKom = val("dostavaKom")==="" ? vrataKom : Number(val("dostavaKom"))||0;
+  const mI = +((Number(val("montaza"))||0)*mKom).toFixed(2);
+  const dI = +((Number(val("dostava"))||0)*dKom).toFixed(2);
+  const sub=+(vrataIzn+mI+dI).toFixed(2);
+  const pdv=+(sub*0.25).toFixed(2);
+  const tot=+(sub+pdv).toFixed(2);
+  const av=+(tot*0.7).toFixed(2);
+  const os=+(tot-av).toFixed(2);
+  const dekoriSet=[...new Set(rows.map(r=>r.dekor))].join(" / ");
+  let n=rows.length;
+  const extra=[];
+  if(mI>0){ n++; extra.push(`<tr><td>${n}</td><td>Montaža</td><td>—</td><td>—</td><td>${fmt(Number(val("montaza"))||0)} € / vrata</td><td class="c">${mKom}</td><td class="r">${fmt(Number(val("montaza"))||0)}</td><td class="r">${fmt(mI)}</td></tr>`); }
+  if(dI>0){ n++; extra.push(`<tr><td>${n}</td><td>Dostava</td><td>—</td><td>—</td><td>${fmt(Number(val("dostava"))||0)} € / vrata</td><td class="c">${dKom}</td><td class="r">${fmt(Number(val("dostava"))||0)}</td><td class="r">${fmt(dI)}</td></tr>`); }
+
+  document.getElementById("sheet").innerHTML = `
+    <div class="memo"></div>
+    <h2>PONUDA</h2>
+    <div class="tl">Sobna vrata – <b>${dekoriSet}</b></div>
+    <div class="meta">
+      <div><span>BROJ PONUDE:</span><b>${val("broj")}</b></div>
+      <div><span>DATUM:</span><b>${val("datum")}</b></div>
+      <div><span>VALJANOST:</span><b>${val("valjanost")}</b></div>
+      <div><span>ISPORUKA:</span><b>${val("isporuka")}</b></div>
+      <div><span>PLAĆANJE:</span><b>${val("placanje")}</b></div>
+    </div>
+    <div class="kupac"><b>Kupac / Naručitelj:</b>${val("kupac")||"________________"}<div>${val("grad")}</div></div>
+    <table>
+      <thead><tr><th>R.BR.</th><th>OPIS / IZVEDBA</th><th>DIMENZIJA</th><th>ŠTOK</th><th>DEKOR</th><th class="c">KOM</th><th class="r">CIJENA</th><th class="r">UKUPNO</th></tr></thead>
+      <tbody>
+        ${rows.map((r,i)=>`<tr>
+          <td>${i+1}</td>
+          <td>${opis(r.model).map(l=>`<div>${l}</div>`).join("")}</td>
+          <td>${r.sirina} × ${r.visina} cm</td>
+          <td>${stokTxt(r)}</td>
+          <td>${r.dekor}</td>
+          <td class="c">${r.kom}</td>
+          <td class="r">${r.cij==null?"—":fmt(r.cij)}</td>
+          <td class="r">${r.uk==null?"—":fmt(r.uk)}</td>
+        </tr>`).join("")}
+        ${extra.join("")}
+      </tbody>
+    </table>
+    <div class="totals">
+      <div><span>UKUPNO bez PDV-a</span><b>${fmt(sub)} €</b></div>
+      <div><span>PDV 25%</span><b>${fmt(pdv)} €</b></div>
+      <div class="grand"><span>UKUPNO s PDV-om</span><span>${fmt(tot)} €</span></div>
+    </div>
+    <div class="nap">
+      <b>NAPOMENE:</b>
+      <div>• Kvake nisu uračunate osim ako je navedeno u stavkama.</div>
+      ${val("napomena")?`<div>• ${val("napomena")}</div>`:""}
+      <div>• Rok isporuke: ${val("isporuka")}. Plaćanje: ${val("placanje")}.</div>
+    </div>
+    <div class="foot">
+      <div class="box">Za naplatu:<div class="big">${fmt(tot)} €</div><div>${val("placanje")}</div>
+        ${val("placanje").toLowerCase().includes("70")?`<div>Avans ${fmt(av)} € · ostatak ${fmt(os)} €</div>`:""}
+      </div>
+      <div class="box">Plaćanje izvršiti na račun kod RBA:<div class="big" style="font-size:13px">HR76 2484008 1105901607</div>
+      <div>PORTAL M&D d.o.o. – Vedran Vukanović</div></div>
+    </div>
+    <div class="sign">POTPIS NARUČITELJA: _______________________ &nbsp;&nbsp; IZDAVATELJ PONUDE: _______________________</div>
+  `;
+}
+
+document.getElementById("datum").value = today();
+document.getElementById("broj").value = nextBroj();
+paintStavke();
+render();
+</script>
+</body>
+</html>
