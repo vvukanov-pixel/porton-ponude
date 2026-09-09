@@ -33,9 +33,9 @@
       padding: 10mm 14mm 12mm; box-shadow: 0 8px 30px rgba(0,0,0,.18);
       color: #111;
     }
-    .memo { height: auto; margin-bottom: 6mm; }
-    .memo img { height: 16mm; width: auto; display: block; }
-    .memo .firma { margin-top: 3mm; font-size: 8.5px; color: #222; line-height: 1.4; }
+    .memo { height: auto; margin-bottom: 6mm; display: grid; grid-template-columns: auto 1fr; gap: 8mm; align-items: start; }
+    .memo img { height: 18mm; width: auto; display: block; }
+    .memo .firma { margin-top: 0; font-size: 8.5px; color: #222; line-height: 1.4; text-align: right; }
     .memo .firma b { display: block; font-size: 10px; color: #1a1a2e; margin-bottom: 1px; }
     .top { display: grid; grid-template-columns: 1fr 77mm; gap: 8mm; align-items: start; }
     .sheet h2 { font-size: 22px; font-weight: 700; letter-spacing: .3px; }
