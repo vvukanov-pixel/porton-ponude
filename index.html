@@ -124,7 +124,7 @@
     <div class="arch">
       <h3>ARHIVA PONUDA (oblak)</h3>
       <label>Firebase URL</label>
-      <input id="fburl" placeholder="https://TVOJ-PROJEKT.europe-west1.firebasedatabase.app" onchange="snimiFbUrl()" />
+      <input id="fburl" placeholder="https://porton-ponude-default-rtdb.europe-west1.firebasedatabase.app" value="https://porton-ponude-default-rtdb.europe-west1.firebasedatabase.app" onchange="snimiFbUrl()" />
       <div class="ok" style="margin:6px 0">Jednom upiši URL baze — vrijedi na svim uređajima nakon spremanja.</div>
       <input id="trazi" placeholder="Traži kupca ili broj ponude" oninput="prikaziArhivu()" />
       <div id="arhiva"></div>
@@ -280,7 +280,7 @@ const FB_KEY = "porton-fburl";
 
 function fbUrl(){
   const el = document.getElementById("fburl");
-  let u = (el && el.value || localStorage.getItem(FB_KEY) || "").trim().replace(/\/+$/,"");
+  let u = (el && el.value || localStorage.getItem(FB_KEY) || "https://porton-ponude-default-rtdb.europe-west1.firebasedatabase.app").trim().replace(/\/+$/,"");
   if(el && !el.value && u) el.value = u;
   return u;
 }
