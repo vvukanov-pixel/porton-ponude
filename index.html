@@ -24,7 +24,8 @@
     .btn-g { background: #2d6a4f; color: #fff; width: 100%; margin-top: 8px; }
     .btn-x { background: transparent; color: #fff; border: 1px solid #555; padding: 4px 8px; font-size: 11px; }
     .btn-del { background: #7a1f2e; color: #fff; border: 0; padding: 4px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; }
-    .extras { margin-top: 6px; max-height: 120px; overflow: auto; border: 1px solid #3a3a55; padding: 4px 6px; border-radius: 4px; }
+    .extras { margin-top: 6px; max-height: 220px; overflow: auto; border: 1px solid #3a3a55; padding: 4px 6px; border-radius: 4px; }
+    .extras .grp { color: #c41e3a; font-size: 10px; font-weight: 700; margin: 6px 0 2px; text-transform: uppercase; }
     .extras label { display: flex; align-items: center; gap: 6px; text-transform: none; font-size: 11px; color: #ddd; margin: 3px 0; letter-spacing: 0; }
     .extras input { width: auto; }
     .preview { padding: 16px; display: flex; justify-content: center; }
@@ -188,37 +189,66 @@ const MODELI = [
 ];
 const STOK = ["107","130","150","190","230","280"];
 const DODACI = [
-  {id:"multipunto", n:"Brava multipunto", c:300},
-  {id:"hotelska", n:"Brava hotelska", c:915},
-  {id:"brava_kazetna", n:"Brava za kazetna vrata", c:50},
-  {id:"brava_klizna", n:"Brava za klizna sa stoperom", c:90},
-  {id:"okov_crno", n:"Okov brava/prihvatnik/kapice CRNO", c:30},
-  {id:"cilindar", n:"Cilindar", c:18},
-  {id:"elektro", n:"Prihvatnik elektro", c:200},
-  {id:"kapice4k", n:"Pokrovne kapice 4K (6 kom)", c:11},
-  {id:"zurilo", n:"Zurilo", c:17},
-  {id:"padajuca", n:"Padajuća brtva", c:63},
-  {id:"resetka", n:"Ventilacijska rešetka", c:60},
-  {id:"medumjera", n:"Međumjera krila 730/830", c:200},
-  {id:"zapiljivanje", n:"Zapiljivanje dovratnika 230 na 206", c:60},
-  {id:"rupa_zurilo", n:"Rupa za zurilo", c:5},
-  {id:"busenje", n:"Bušenje bez rupe za ključ", c:5},
-  {id:"prosirivac", n:"Proširivač 220 mm", c:150},
-  {id:"zl70", n:"Z.L. 70/12 pero 40 mm", c:16},
-  {id:"zl90", n:"Z.L. 90/12 pero 40 mm", c:16},
-  {id:"iverica", n:"Ispuna krila cjevasta iverica", c:60},
-  {id:"krilo_visina", n:"Krilo duže/kraće od dovratnika", c:100},
-  {id:"krilo_sirina", n:"Krilo širine 934–1200 mm", c:530},
-  {id:"muro_sirina", n:"FILO MURO nestandardna širina", c:400},
-  {id:"al1", n:"AL1 Inox/Crna/Zlatna", c:26},
-  {id:"al2", n:"AL2", c:52},
-  {id:"st1_bez", n:"Otvora ST1 bez stakla", c:80},
-  {id:"st1_sa", n:"Otvora ST1 sa staklom", c:242},
-  {id:"st2_sa", n:"Otvora ST2 sa staklom", c:223},
-  {id:"st3_sa", n:"Otvora ST3 sa staklom", c:190},
-  {id:"nadsvjetlo_staklo", n:"Staklo nadsvjetlo", c:204},
-  {id:"dosvjetlo_staklo", n:"Staklo dosvjetlo", c:401}
+  {id:"multipunto", n:"Brava multipunto", c:300, g:"Okov"},
+  {id:"hotelska", n:"Brava hotelska", c:915, g:"Okov"},
+  {id:"brava_kazetna", n:"Brava za kazetna vrata", c:50, g:"Okov"},
+  {id:"brava_klizna", n:"Brava za klizna sa stoperom", c:90, g:"Okov"},
+  {id:"okov_crno", n:"Okov brava/prihvatnik/kapice CRNO", c:30, g:"Okov"},
+  {id:"cilindar", n:"Cilindar", c:18, g:"Okov"},
+  {id:"elektro", n:"Prihvatnik elektro", c:200, g:"Okov"},
+  {id:"kapice4k", n:"Pokrovne kapice 4K (6 kom)", c:11, g:"Okov"},
+  {id:"zurilo", n:"Zurilo", c:17, g:"Okov"},
+  {id:"padajuca", n:"Padajuća brtva", c:63, g:"Okov"},
+  {id:"resetka", n:"Ventilacijska rešetka", c:60, g:"Okov"},
+  {id:"medumjera", n:"Međumjera krila 730/830", c:200, g:"Radovi"},
+  {id:"zapiljivanje", n:"Zapiljivanje dovratnika 230 na 206", c:60, g:"Radovi"},
+  {id:"rupa_zurilo", n:"Rupa za zurilo", c:5, g:"Radovi"},
+  {id:"busenje", n:"Bušenje bez rupe za ključ", c:5, g:"Radovi"},
+  {id:"prosirivac", n:"Proširivač 220 mm", c:150, g:"Profili"},
+  {id:"zl70", n:"Završna lajsna 70/12 pero 40 mm", c:16, g:"Profili"},
+  {id:"zl90", n:"Završna lajsna 90/12 pero 40 mm", c:16, g:"Profili"},
+  {id:"zl70_12", n:"Završna lajsna 70/12", c:14, g:"Profili"},
+  {id:"zl70_10", n:"Završna lajsna 70/10", c:12, g:"Profili"},
+  {id:"zl90_12", n:"Završna lajsna 90/12", c:17, g:"Profili"},
+  {id:"zl90_10", n:"Završna lajsna 90/10", c:15, g:"Profili"},
+  {id:"iverica", n:"Ispuna krila cjevasta iverica", c:60, g:"Radovi"},
+  {id:"krilo_visina", n:"Krilo duže/kraće od dovratnika", c:100, g:"Radovi"},
+  {id:"krilo_sirina", n:"Krilo širine 934–1200 mm", c:530, g:"Radovi"},
+  {id:"muro_sirina", n:"FILO MURO nestandardna širina", c:400, g:"Radovi"},
+  {id:"al1", n:"AL1 Inox/Crna/Zlatna", c:26, g:"ALU lajsne"},
+  {id:"al2", n:"AL2 Inox/Crna/Zlatna", c:52, g:"ALU lajsne"},
+  {id:"al3", n:"AL3 Inox/Crna/Zlatna", c:78, g:"ALU lajsne"},
+  {id:"al4", n:"AL4 Inox/Crna/Zlatna", c:104, g:"ALU lajsne"},
+  {id:"al5", n:"AL5 Inox/Crna/Zlatna", c:157, g:"ALU lajsne"},
+  {id:"al6", n:"AL6 Inox/Crna/Zlatna", c:158, g:"ALU lajsne"},
+  {id:"al7", n:"AL7 Inox/Crna/Zlatna", c:53, g:"ALU lajsne"},
+  {id:"al8", n:"AL8 Inox/Crna/Zlatna", c:53, g:"ALU lajsne"},
+  {id:"al9", n:"AL9 Inox/Crna/Zlatna", c:106, g:"ALU lajsne"},
+  {id:"al10", n:"AL10 Inox/Crna/Zlatna", c:106, g:"ALU lajsne"},
+  {id:"al11", n:"AL11 Inox/Crna/Zlatna", c:156, g:"ALU lajsne"},
+  {id:"al12", n:"AL12 Inox/Crna/Zlatna", c:104, g:"ALU lajsne"},
+  {id:"st1_bez", n:"Otvora ST1 bez stakla", c:80, g:"Otvor bez stakla"},
+  {id:"st2_bez", n:"Otvora ST2 bez stakla", c:80, g:"Otvor bez stakla"},
+  {id:"st3_bez", n:"Otvora ST3 bez stakla", c:80, g:"Otvor bez stakla"},
+  {id:"st4_bez", n:"Otvora ST4 bez stakla", c:320, g:"Otvor bez stakla"},
+  {id:"st5_bez", n:"Otvora ST5 bez stakla", c:240, g:"Otvor bez stakla"},
+  {id:"st6_bez", n:"Otvora ST6 bez stakla", c:320, g:"Otvor bez stakla"},
+  {id:"st7_bez", n:"Otvora ST7 bez stakla", c:80, g:"Otvor bez stakla"},
+  {id:"st8_bez", n:"Otvora ST8 bez stakla", c:320, g:"Otvor bez stakla"},
+  {id:"st9_bez", n:"Otvora ST9 bez stakla", c:80, g:"Otvor bez stakla"},
+  {id:"st1_staklo", n:"Doplata staklo ST1", c:162, g:"Doplata staklo"},
+  {id:"st2_staklo", n:"Doplata staklo ST2", c:143, g:"Doplata staklo"},
+  {id:"st3_staklo", n:"Doplata staklo ST3", c:110, g:"Doplata staklo"},
+  {id:"st4_staklo", n:"Doplata staklo ST4", c:151, g:"Doplata staklo"},
+  {id:"st5_staklo", n:"Doplata staklo ST5", c:110, g:"Doplata staklo"},
+  {id:"st6_staklo", n:"Doplata staklo ST6", c:109, g:"Doplata staklo"},
+  {id:"st7_staklo", n:"Doplata staklo ST7", c:168, g:"Doplata staklo"},
+  {id:"st8_staklo", n:"Doplata staklo ST8", c:123, g:"Doplata staklo"},
+  {id:"st9_staklo", n:"Doplata staklo ST9", c:59, g:"Doplata staklo"},
+  {id:"nadsvjetlo_staklo", n:"Staklo nadsvjetlo", c:204, g:"Doplata staklo"},
+  {id:"dosvjetlo_staklo", n:"Staklo dosvjetlo", c:401, g:"Doplata staklo"}
 ];
+let zadnjiModel = "falc";
 
 function dekori(m){
   if(m==="filo_iverica") return Object.keys(FILO_IV);
@@ -269,7 +299,11 @@ function nextBroj(){
   try{ n=parseInt(localStorage.getItem(k)||"0",10)+1; localStorage.setItem(k,String(n)); }catch(e){}
   return p+"-"+String(n).padStart(3,"0");
 }
-function prazna(){ return {model:"filo_muro",dekor:"Bijelo mat",sirina:"80",visina:"210",stok:"107",kom:"1",dodaci:[]}; }
+function prazna(){
+  const m = zadnjiModel || "falc";
+  const d = dekori(m)[0] || "Bijelo mat";
+  return {model:m,dekor:d,sirina:"80",visina:"210",stok:"107",kom:"1",dodaci:[]};
+}
 
 let stavke = [];
 
@@ -417,6 +451,7 @@ function novaPonuda(){
   document.getElementById("dostavaKom").value = "";
   document.getElementById("datum").value = today();
   stavke = [];
+  zadnjiModel = "falc";
   document.getElementById("broj").value = nextBroj();
   paintStavke();
   render();
@@ -427,6 +462,7 @@ function del(i){ stavke.splice(i,1); paintStavke(); render(); }
 function setS(i,f,v){
   stavke[i][f]=v;
   if(f==="model"){
+    zadnjiModel = v;
     const d=dekori(v);
     if(!d.includes(stavke[i].dekor)) stavke[i].dekor=d[0];
     paintStavke();
@@ -453,10 +489,12 @@ function paintStavke(){
     const ds=dekori(s.model);
     const base=cijena(s);
     const needStok = s.model==="falc"||s.model==="filo_iverica"||s.model==="filo_sace";
-    const extrasHtml = DODACI.map(d=>{
+    let extrasHtml = "", lastG = "";
+    DODACI.forEach(d=>{
+      if(d.g !== lastG){ extrasHtml += `<div class="grp">${d.g}</div>`; lastG = d.g; }
       const on=(s.dodaci||[]).includes(d.id);
-      return `<label><input type="checkbox" ${on?"checked":""} onchange="toggleDodatak(${i},'${d.id}')"><span>${d.n} (${fmt(d.c)} €)</span></label>`;
-    }).join("");
+      extrasHtml += `<label><input type="checkbox" ${on?"checked":""} onchange="toggleDodatak(${i},'${d.id}')"><span>${d.n} (${fmt(d.c)} €)</span></label>`;
+    });
     const extraSum = dodaciIznos(s);
     return `<div class="item">
       <div class="hd"><span>Stavka ${i+1}</span><button class="btn-del" onclick="del(${i})">Obriši stavku</button></div>
@@ -482,15 +520,18 @@ function render(){
   const markup=(Number(val("postotak"))||0)/100;
   const rows=stavke.map(s=>{
     const base=cijena(s);
-    const extra=dodaciIznos(s);
-    const raw = base==null ? null : base+extra;
-    const cij=raw==null?null:+(raw*(1+markup)).toFixed(2);
+    const cij=base==null?null:+(base*(1+markup)).toFixed(2);
     const kom=Number(s.kom)||0;
-    const extraNames=(s.dodaci||[]).map(id=>(DODACI.find(x=>x.id===id)||{}).n).filter(Boolean);
-    return {...s,base,extra,cij,kom,uk:cij==null?null:+(cij*kom).toFixed(2),extraNames};
+    const extras=(s.dodaci||[]).map(id=>{
+      const d=DODACI.find(x=>x.id===id);
+      if(!d) return null;
+      const c=+(d.c*(1+markup)).toFixed(2);
+      return {n:d.n, c, uk:+(c*kom).toFixed(2)};
+    }).filter(Boolean);
+    return {...s,base,cij,kom,uk:cij==null?null:+(cij*kom).toFixed(2),extras};
   });
   const vrataKom=rows.reduce((a,r)=>a+r.kom,0);
-  const vrataIzn=rows.reduce((a,r)=>a+(r.uk||0),0);
+  const vrataIzn=rows.reduce((a,r)=>a+(r.uk||0)+r.extras.reduce((x,e)=>x+e.uk,0),0);
   const mKom = val("montazaKom")==="" ? vrataKom : Number(val("montazaKom"))||0;
   const dKom = val("dostavaKom")==="" ? vrataKom : Number(val("dostavaKom"))||0;
   const mI = +((Number(val("montaza"))||0)*mKom).toFixed(2);
@@ -529,7 +570,7 @@ function render(){
       <tbody>
         ${rows.map((r,i)=>`<tr>
           <td>${i+1}</td>
-          <td class="opis">${opis(r.model).map(l=>`<div>${l}</div>`).join("")}${r.extraNames.length?`<div>${r.extraNames.join(", ")}</div>`:""}</td>
+          <td class="opis">${opis(r.model).map(l=>`<div>${l}</div>`).join("")}</td>
           <td>${r.sirina} × ${r.visina} cm</td>
           <td>${stokTxt(r)}</td>
           <td>${r.dekor}</td>
@@ -537,6 +578,16 @@ function render(){
           <td class="r">${r.cij==null?"—":fmt(r.cij)}</td>
           <td class="r">${r.uk==null?"—":fmt(r.uk)}</td>
         </tr>`).join("")}
+        ${rows.flatMap(r=>r.extras.map(e=>`<tr>
+          <td></td>
+          <td class="opis">Doplata: ${e.n}</td>
+          <td>${r.sirina} × ${r.visina} cm</td>
+          <td>—</td>
+          <td>${r.dekor}</td>
+          <td class="c">${r.kom}</td>
+          <td class="r">${fmt(e.c)}</td>
+          <td class="r">${fmt(e.uk)}</td>
+        </tr>`)).join("")}
         ${extraRows.join("")}
       </tbody>
     </table>
