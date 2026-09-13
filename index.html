@@ -93,6 +93,10 @@
     <button class="btn btn-red" style="margin-top:8px" onclick="novaPonuda()">Nova ponuda (obriši sve)</button>
     <label>Kupac</label>
     <input id="kupac" placeholder="Ime i prezime / firma" oninput="render()" />
+    <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:12px;color:#fff;margin:8px 0 4px">
+      <input type="checkbox" id="pravna" onchange="render()" style="width:auto">
+      Pravna osoba — prijenos PDV-a (čl. 75. st. 3)
+    </label>
     <label>Mjesto</label>
     <input id="grad" value="20000 DUBROVNIK" oninput="render()" />
     <div class="row2">
@@ -389,6 +393,7 @@ function stanjePonude(){
     dostava: val("dostava"),
     dostavaKom: val("dostavaKom"),
     napomena: val("napomena"),
+    pravna: document.getElementById("pravna").checked,
     stavke: JSON.parse(JSON.stringify(stavke)),
     saved: new Date().toISOString()
   };
@@ -405,6 +410,7 @@ function otvoriPonudu(broj){
       const el=document.getElementById(k);
       if(el) el.value = o[k] || "";
     });
+    document.getElementById("pravna").checked = !!o.pravna;
     stavke = o.stavke || [];
     paintStavke();
     render();
@@ -445,6 +451,7 @@ async function prikaziArhivu(){
 
 function novaPonuda(){
   document.getElementById("kupac").value = "";
+  document.getElementById("pravna").checked = false;
   document.getElementById("napomena").value = "";
   document.getElementById("postotak").value = "0";
   document.getElementById("montazaKom").value = "";
@@ -537,8 +544,9 @@ function render(){
   const mI = +((Number(val("montaza"))||0)*mKom).toFixed(2);
   const dI = +((Number(val("dostava"))||0)*dKom).toFixed(2);
   const sub=+(vrataIzn+mI+dI).toFixed(2);
-  const pdv=+(sub*0.25).toFixed(2);
-  const tot=+(sub+pdv).toFixed(2);
+  const pravna = document.getElementById("pravna").checked;
+  const pdv = pravna ? 0 : +(sub*0.25).toFixed(2);
+  const tot = +(sub+pdv).toFixed(2);
   const av=+(tot*0.7).toFixed(2);
   const os=+(tot-av).toFixed(2);
   const dekoriSet=[...new Set(rows.map(r=>r.dekor))].filter(Boolean).join(" / ") || "—";
@@ -593,11 +601,13 @@ function render(){
     </table>
     <div class="totals">
       <div><span>UKUPNO bez PDV-a</span><b>${fmt(sub)} €</b></div>
-      <div><span>PDV 25%</span><b>${fmt(pdv)} €</b></div>
-      <div class="grand"><span>UKUPNO s PDV-om</span><span>${fmt(tot)} €</span></div>
+      ${pravna
+        ? `<div><span>PDV</span><b>prijenos obveze</b></div><div class="grand"><span>UKUPNO</span><span>${fmt(tot)} €</span></div>`
+        : `<div><span>PDV 25%</span><b>${fmt(pdv)} €</b></div><div class="grand"><span>UKUPNO s PDV-om</span><span>${fmt(tot)} €</span></div>`}
     </div>
     <div class="nap">
       <b>NAPOMENE:</b>
+      ${pravna?`<div>• PRIJENOS POREZNE OBVEZE prema čl. 75. st. 3 Zakona o PDV-u (NN 73/13).</div>`:""}
       <div>• Kvake nisu uračunate osim ako je navedeno u stavkama.</div>
       ${val("napomena")?`<div>• ${val("napomena")}</div>`:""}
       <div>• Rok isporuke: ${val("isporuka")}. Plaćanje: ${val("placanje")}.</div>
