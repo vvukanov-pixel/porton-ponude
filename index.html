@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="vercel-toolbar" content="hidden" />
   <title>PORTON ponude</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -61,6 +62,12 @@
     .big { color: #c41e3a; font-size: 16px; font-weight: 700; margin: 4px 0 3px; }
     .iban { color: #c41e3a; font-size: 12px; font-weight: 700; margin: 4px 0; }
     .sign { margin-top: 8mm; font-size: 9px; }
+    [data-vercel-badge], .vercel-badge, #vercel-badge, iframe[src*="vercel"],
+    [class*="vercel"], [id*="vercel"] { display: none !important; visibility: hidden !important; }
+    @media print {
+      [data-vercel-badge], .vercel-badge, #vercel-badge, iframe[src*="vercel"],
+      [class*="vercel"], [id*="vercel"] { display: none !important; }
+    }
     @page { size: A4; margin: 8mm 8mm 10mm; }
     @media print {
       html, body { background: #fff !important; }
