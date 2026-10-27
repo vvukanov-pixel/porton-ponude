@@ -589,7 +589,10 @@ function val(id){ return document.getElementById(id).value; }
 function dodaciIznos(s){
   return (s.dodaci||[]).reduce((a,id)=>{
     const d=DODACI.find(x=>x.id===id);
-    return a+(d?d.c:0);
+    if(!d) return a;
+    let c = d.c;
+    if(s.dvokrilna && d.g==="Doplata staklo") c *= 2;
+    return a+c;
   },0);
 }
 
@@ -636,8 +639,9 @@ function render(){
     const extras=(s.dodaci||[]).map(id=>{
       const d=DODACI.find(x=>x.id===id);
       if(!d) return null;
-      const c=+(d.c*(1+markup)).toFixed(2);
-      return {n:d.n, c, uk:+(c*kom).toFixed(2)};
+      let c=+(d.c*(1+markup)).toFixed(2);
+      if(s.dvokrilna && d.g==="Doplata staklo") c = c * 2;
+      return {n:d.n + (s.dvokrilna && d.g==="Doplata staklo" ? " (×2)" : ""), c, uk:+(c*kom).toFixed(2)};
     }).filter(Boolean);
     return {...s,base,cij,kom,uk:cij==null?null:+(cij*kom).toFixed(2),extras};
   });
