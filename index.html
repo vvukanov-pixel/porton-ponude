@@ -208,12 +208,26 @@ const PROLAZNI = {
   "Palisandro blu":    {107:221,130:240,150:253,190:null,230:318,280:374},
   "Tortora":           {107:254,130:279,150:298,190:null,230:404,280:414}
 };
+const NADSVJETLO = {
+  "Bijelo mat":        {107:310,130:325,150:337,190:366,230:401,280:458},
+  "Bijelo matrix":     {107:319,130:335,150:349,190:379,230:407,280:470},
+  "Bijelo palisander": {107:319,130:335,150:349,190:379,230:407,280:470},
+  "Bijelo reflex":     {107:329,130:346,150:361,190:393,230:423,280:487},
+  "Saten reflex":      {107:331,130:348,150:363,190:395,230:425,280:481},
+  "Hrast pembroke":    {107:338,130:355,150:370,190:null,230:433,280:491},
+  "Beton maloja":      {107:329,130:345,150:360,190:null,230:421,280:476},
+  "Brijest":           {107:329,130:345,150:360,190:null,230:421,280:476},
+  "Orah alter":        {107:329,130:345,150:360,190:null,230:421,280:476},
+  "Palisandro blu":    {107:323,130:338,150:352,190:null,230:411,280:474},
+  "Tortora":           {107:357,130:374,150:397,190:null,230:503,280:567}
+};
 const MODELI = [
   ["falc","FALC ispuna saće"],
   ["filo_iverica","FILO cjevasta iverica"],
   ["filo_sace","FILO ispuna saće"],
   ["filo_muro","FILO MURO"],
   ["prolazni","Prolazni dovratnik"],
+  ["fix_nadsvjetlo","Fix - nadsvjetlo"],
   ["slide1","SLIDE 1 (economic + drvena maska)"],
   ["slide2","SLIDE 2 (soft close + Al maska)"],
   ["slide3","SLIDE 3 (skrivena vodilica)"],
@@ -288,6 +302,7 @@ function dekori(m){
   if(m==="filo_sace") return Object.keys(FILO_SA);
   if(m==="filo_muro") return Object.keys(MURO);
   if(m==="prolazni") return Object.keys(PROLAZNI);
+  if(m==="fix_nadsvjetlo") return Object.keys(NADSVJETLO);
   if(m.startsWith("slide")) return Object.keys(SLIDE);
   return Object.keys(FALC);
 }
@@ -299,6 +314,7 @@ function cijena(s){
   else if(s.model==="filo_iverica") base = (FILO_IV[s.dekor]||{})[st] ?? null;
   else if(s.model==="filo_sace") base = (FILO_SA[s.dekor]||{})[st] ?? null;
   else if(s.model==="prolazni") base = (PROLAZNI[s.dekor]||{})[st] ?? null;
+  else if(s.model==="fix_nadsvjetlo") base = (NADSVJETLO[s.dekor]||{})[st] ?? null;
   else if(s.model==="filo_muro"){ const r=MURO[s.dekor]; base = r ? (v>=215?r.hi:r.lo) : null; }
   else { const sk = slideKey(s.model); if(sk) base = (SLIDE[s.dekor]||{})[sk] ?? null; }
   if(base != null && s.dvokrilna) base = base * 2;
@@ -311,6 +327,7 @@ function opis(m){
     filo_sace:["Sobna vrata FILO","Ispuna saće, skrivene","baglame, magnetna brava"],
     filo_muro:["Vrata FILO MURO","Ispuna saće, skrivene baglame","magnet, ALU skriveni štok"],
     prolazni:["Prolazni dovratnik","Ravni obuhvatni rastavljen","Z.L. na mjeru"],
+    fix_nadsvjetlo:["Fix - nadsvjetlo","Max visina 1050 mm","zasebna stavka"],
     slide1:["Klizna vrata SLIDE 1","Vodilica economic, drvena maska","ukopna ručka, saće"],
     slide2:["Klizna vrata SLIDE 2","Soft close, Al maska","ukopna ručka, saće"],
     slide3:["Klizna vrata SLIDE 3","Skrivena vodilica soft close","ukopna ručka, saće"],
@@ -581,7 +598,7 @@ function paintStavke(){
   box.innerHTML = stavke.map((s,i)=>{
     const ds=dekori(s.model);
     const base=cijena(s);
-    const needStok = s.model==="falc"||s.model==="filo_iverica"||s.model==="filo_sace"||s.model==="prolazni";
+    const needStok = s.model==="falc"||s.model==="filo_iverica"||s.model==="filo_sace"||s.model==="prolazni"||s.model==="fix_nadsvjetlo";
     let extrasHtml = "", lastG = "";
     DODACI.forEach(d=>{
       if(d.g !== lastG){ extrasHtml += `<div class="grp">${d.g}</div>`; lastG = d.g; }
