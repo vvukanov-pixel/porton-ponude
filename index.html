@@ -294,14 +294,15 @@ function dekori(m){
 function slideKey(m){ return ({slide1:"S1",slide2:"S2",slide3:"S3",slide4:"S4",slide5:"S5"})[m]; }
 function cijena(s){
   const v = Number(s.visina)||210, st = s.stok;
-  if(s.model==="falc") return (FALC[s.dekor]||{})[st] ?? null;
-  if(s.model==="filo_iverica") return (FILO_IV[s.dekor]||{})[st] ?? null;
-  if(s.model==="filo_sace") return (FILO_SA[s.dekor]||{})[st] ?? null;
-  if(s.model==="prolazni") return (PROLAZNI[s.dekor]||{})[st] ?? null;
-  if(s.model==="filo_muro"){ const r=MURO[s.dekor]; return r ? (v>=215?r.hi:r.lo) : null; }
-  const sk = slideKey(s.model);
-  if(sk) return (SLIDE[s.dekor]||{})[sk] ?? null;
-  return null;
+  let base = null;
+  if(s.model==="falc") base = (FALC[s.dekor]||{})[st] ?? null;
+  else if(s.model==="filo_iverica") base = (FILO_IV[s.dekor]||{})[st] ?? null;
+  else if(s.model==="filo_sace") base = (FILO_SA[s.dekor]||{})[st] ?? null;
+  else if(s.model==="prolazni") base = (PROLAZNI[s.dekor]||{})[st] ?? null;
+  else if(s.model==="filo_muro"){ const r=MURO[s.dekor]; base = r ? (v>=215?r.hi:r.lo) : null; }
+  else { const sk = slideKey(s.model); if(sk) base = (SLIDE[s.dekor]||{})[sk] ?? null; }
+  if(base != null && s.dvokrilna) base = base * 2;
+  return base;
 }
 function opis(m){
   return {
@@ -338,7 +339,7 @@ function nextBroj(){
 function prazna(){
   const m = zadnjiModel || "falc";
   const d = dekori(m)[0] || "Bijelo mat";
-  return {model:m,dekor:d,sirina:"80",visina:"210",stok:"107",kom:"1",dodaci:[]};
+  return {model:m,dekor:d,sirina:"80",visina:"210",stok:"107",kom:"1",dvokrilna:false,dodaci:[]};
 }
 
 let stavke = [];
@@ -496,7 +497,7 @@ function otvoriPonudu(broj){
       if(el) el.value = o[k] || "";
     });
     document.getElementById("pravna").checked = !!o.pravna;
-    stavke = o.stavke || [];
+    stavke = (o.stavke || []).map(s=>({...s, dvokrilna: !!s.dvokrilna}));
     paintStavke();
     render();
     window.scrollTo(0,0);
@@ -557,8 +558,8 @@ function setS(i,f,v){
     zadnjiModel = v;
     const d=dekori(v);
     if(!d.includes(stavke[i].dekor)) stavke[i].dekor=d[0];
-    paintStavke();
   }
+  paintStavke();
   render();
 }
 function toggleDodatak(i,id){
@@ -600,6 +601,7 @@ function paintStavke(){
         <div><label>Kom</label><input type="number" value="${s.kom}" oninput="setS(${i},'kom',this.value)"></div>
       </div>
       ${needStok?`<label>Štok mm</label><select onchange="setS(${i},'stok',this.value)">${STOK.map(t=>`<option ${s.stok===t?"selected":""}>${t}</option>`).join("")}</select>`:""}
+      <label style="margin-top:6px"><input type="checkbox" ${s.dvokrilna?"checked":""} onchange="setS(${i},'dvokrilna',this.checked)"> Dvokrilna (cijena × 2)</label>
       ${base==null?`<div class="warn">Nema cijene u cjeniku za ovu kombinaciju.</div>`:
         `<div class="ok">Cjenik ${fmt(base)} €${extraSum?` + dodaci ${fmt(extraSum)} €`:""} → nakon % ${fmt((base+extraSum)*(1+(Number(val("postotak"))||0)/100))} €</div>`}
       <label>Dodaci iz cjenika</label>
@@ -663,7 +665,7 @@ function render(){
       <tbody>
         ${rows.map((r,i)=>`<tr>
           <td>${i+1}</td>
-          <td class="opis">${opis(r.model).map(l=>`<div>${l}</div>`).join("")}</td>
+          <td class="opis">${opis(r.model).map(l=>`<div>${l}</div>`).join("")}${r.dvokrilna?`<div><b>Dvokrilna (×2)</b></div>`:""}</td>
           <td>${r.sirina} × ${r.visina} cm</td>
           <td>${stokTxt(r)}</td>
           <td>${r.dekor}</td>
