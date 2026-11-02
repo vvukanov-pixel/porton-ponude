@@ -85,6 +85,25 @@
     .arch-item .row2 { margin-top:6px; }
     @media (max-width: 980px) { .app { grid-template-columns: 1fr; } .panel { max-height: none; } }
   </style>
+<script>
+// 02.11.2026: pristup samo preko poslanog linka (#k=...). Ključ se pamti, pa se dalje otvara normalno.
+(function(){
+  var RE=/^p_[A-Za-z0-9]{24}$/, KEY="porton-fbkljuc", k="";
+  var m=location.hash.match(/k=(p_[A-Za-z0-9]{24})/);
+  try{
+    if(m){ localStorage.setItem(KEY,m[1]); history.replaceState(null,"",location.pathname+location.search); }
+    k=localStorage.getItem(KEY)||"";
+  }catch(e){ k=m?m[1]:""; }
+  window.__PORTON_OK = RE.test(k);
+  if(!window.__PORTON_OK){
+    document.documentElement.innerHTML='<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nema pristupa</title></head>'+
+      '<body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;background:#f4f4f4;color:#333">'+
+      '<div style="text-align:center;padding:24px"><div style="font-size:42px">🔒</div><h2 style="margin:8px 0">Nema pristupa</h2>'+
+      '<p style="color:#666">Ova stranica se otvara samo preko poslanog linka.</p></div></body>';
+    throw new Error("nema pristupa");
+  }
+})();
+</script>
 </head>
 <body>
 <div class="app">
