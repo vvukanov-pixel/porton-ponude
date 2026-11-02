@@ -145,7 +145,9 @@
       <h3>ARHIVA PONUDA (oblak)</h3>
       <label>Firebase URL</label>
       <input id="fburl" placeholder="https://porton-ponude-default-rtdb.europe-west1.firebasedatabase.app" value="https://porton-ponude-default-rtdb.europe-west1.firebasedatabase.app" onchange="snimiFbUrl()" />
-      <div class="ok" style="margin:6px 0">Jednom upiši URL baze — vrijedi na svim uređajima nakon spremanja.</div>
+      <label>Ključ arhive</label>
+      <input id="fbkljuc" type="password" placeholder="p_..." onchange="snimiFbKljuc()" />
+      <div class="ok" style="margin:6px 0">Ključ upiši jednom na svakom uređaju (pamti se). Bez ključa arhiva se ne može otvoriti.</div>
       <input id="trazi" placeholder="Traži kupca ili broj ponude" oninput="prikaziArhivu()" />
       <div id="arhiva"></div>
     </div>
@@ -370,7 +372,23 @@ function fbUrl(){
   const el = document.getElementById("fburl");
   let u = (el && el.value || localStorage.getItem(FB_KEY) || "https://porton-ponude-default-rtdb.europe-west1.firebasedatabase.app").trim().replace(/\/+$/,"");
   if(el && !el.value && u) el.value = u;
-  return u;
+  // 01.11.2026: arhiva je pod tajnim ključem (nije u kodu, samo u ovom pregledniku)
+  const k = fbKljuc();
+  if(!u || !k) return "";
+  return u + "/" + k;
+}
+const FB_KLJUC = "porton-fbkljuc";
+function fbKljuc(){
+  const el = document.getElementById("fbkljuc");
+  const k = ((el && el.value) || localStorage.getItem(FB_KLJUC) || "").trim();
+  if(el && !el.value && k) el.value = k;
+  return /^p_[A-Za-z0-9]{24}$/.test(k) ? k : "";
+}
+function snimiFbKljuc(){
+  const k = (document.getElementById("fbkljuc").value||"").trim();
+  if(k && !/^p_[A-Za-z0-9]{24}$/.test(k)){ alert("Ključ nije ispravan (mora počinjati s p_ i imati 26 znakova)."); return; }
+  localStorage.setItem(FB_KLJUC, k);
+  prikaziArhivu();
 }
 function snimiFbUrl(){
   const u = (document.getElementById("fburl").value||"").trim().replace(/\/+$/,"");
@@ -384,12 +402,13 @@ async function ucitajArhivu(){
   }
   try{
     const r = await fetch(u + "/ponude.json");
+    if(!r.ok) throw new Error(r.status);
     const data = await r.json();
     if(!data) return [];
     if(Array.isArray(data)) return data;
     return Object.values(data);
   }catch(e){
-    alert("Oblak nije dostupan. Provjeri Firebase URL.");
+    alert("Oblak nije dostupan. Provjeri Firebase URL i ključ arhive.");
     return [];
   }
 }
@@ -412,7 +431,7 @@ async function spremiArhivu(tiho){
 const _el=document.getElementById("fburl");
 if(_el && _fb) _el.value=_fb;
 prikaziArhivu();
-    if(!tiho) alert("Nema Firebase URL-a — spremljeno samo na ovom računalu.");
+    if(!tiho) alert("Nema ključa arhive — spremljeno samo na ovom uređaju. Upiši ključ u ARHIVA PONUDA.");
     return;
   }
   try{
@@ -425,7 +444,7 @@ prikaziArhivu();
     await prikaziArhivu();
     if(!tiho) alert("Spremljeno u oblak: " + o.broj + (o.kupac?" — "+o.kupac:""));
   }catch(e){
-    alert("Spremanje u oblak nije uspjelo. Provjeri Firebase pravila (read/write true).");
+    alert("Spremanje u oblak nije uspjelo. Provjeri ključ arhive.");
   }
 }
 function stanjePonude(){
