@@ -610,6 +610,19 @@ function novaPonuda(){
 function noviBroj(){ document.getElementById("broj").value = nextBroj(); render(); }
 function dodaj(){ stavke.push(prazna()); paintStavke(); render(); }
 function del(i){ stavke.splice(i,1); paintStavke(); render(); }
+function setT(i,f,v){
+  stavke[i][f]=v;
+  render();
+}
+function cijenaHtml(s){
+  const base=cijena(s);
+  const extraSum = dodaciIznos(s);
+  return base==null?`<div class="warn">Nema cijene u cjeniku za ovu kombinaciju.</div>`:
+    `<div class="ok">Cjenik ${fmt(base)} €${extraSum?` + dodaci ${fmt(extraSum)} €`:""} → nakon % ${fmt((base+extraSum)*(1+(Number(val("postotak"))||0)/100))} €</div>`;
+}
+function osvjeziCijene(){
+  stavke.forEach((s,i)=>{ const el=document.getElementById("cij-"+i); if(el) el.innerHTML=cijenaHtml(s); });
+}
 function setS(i,f,v){
   stavke[i][f]=v;
   if(f==="model"){
@@ -657,14 +670,13 @@ function paintStavke(){
       <label>Dekor</label>
       <select onchange="setS(${i},'dekor',this.value)">${ds.map(d=>`<option ${s.dekor===d?"selected":""}>${d}</option>`).join("")}</select>
       <div class="row3">
-        <div><label>Širina</label><input value="${s.sirina}" oninput="setS(${i},'sirina',this.value)"></div>
-        <div><label>Visina</label><input value="${s.visina}" oninput="setS(${i},'visina',this.value)"></div>
-        <div><label>Kom</label><input type="number" value="${s.kom}" oninput="setS(${i},'kom',this.value)"></div>
+        <div><label>Širina</label><input value="${s.sirina}" oninput="setT(${i},'sirina',this.value)"></div>
+        <div><label>Visina</label><input value="${s.visina}" oninput="setT(${i},'visina',this.value)"></div>
+        <div><label>Kom</label><input type="number" value="${s.kom}" oninput="setT(${i},'kom',this.value)"></div>
       </div>
       ${needStok?`<label>Štok mm</label><select onchange="setS(${i},'stok',this.value)">${STOK.map(t=>`<option ${s.stok===t?"selected":""}>${t}</option>`).join("")}</select>`:""}
       <label style="margin-top:6px"><input type="checkbox" ${s.dvokrilna?"checked":""} onchange="setS(${i},'dvokrilna',this.checked)"> Dvokrilna (cijena × 2)</label>
-      ${base==null?`<div class="warn">Nema cijene u cjeniku za ovu kombinaciju.</div>`:
-        `<div class="ok">Cjenik ${fmt(base)} €${extraSum?` + dodaci ${fmt(extraSum)} €`:""} → nakon % ${fmt((base+extraSum)*(1+(Number(val("postotak"))||0)/100))} €</div>`}
+      <div id="cij-${i}">${cijenaHtml(s)}</div>
       <label>Dodaci iz cjenika</label>
       <div class="extras">${extrasHtml}</div>
     </div>`;
@@ -672,6 +684,7 @@ function paintStavke(){
 }
 
 function render(){
+  osvjeziCijene();
   const markup=(Number(val("postotak"))||0)/100;
   const rows=stavke.map(s=>{
     const base=cijena(s);
