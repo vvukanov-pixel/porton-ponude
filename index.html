@@ -160,8 +160,8 @@
     <textarea id="napomena" rows="3" oninput="render()"></textarea>
     <button class="btn btn-g" onclick="spremiArhivu()">Spremi u arhivu</button>
     <button class="btn btn-red" onclick="printaj()">Print / PDF</button>
-    <button class="btn btn-g" onclick="preuzmiPonudu()">Preuzmi (GoodNotes / mail)</button>
-    <button class="btn btn-x" style="width:100%;margin-top:8px;padding:9px 12px;font-size:13px;font-weight:700" onclick="podijeliPonudu()">Podijeli</button>
+    <button class="btn btn-g" onclick="preuzmiPonudu()">Preuzmi PDF</button>
+    <button class="btn btn-x" style="width:100%;margin-top:8px;padding:9px 12px;font-size:13px;font-weight:700" onclick="podijeliPonudu()">Podijeli PDF (GoodNotes / mail / WhatsApp)</button>
 
     <div class="arch">
       <h3>ARHIVA PONUDA (oblak)</h3>
@@ -489,14 +489,80 @@ function stanjePonude(){
     saved: new Date().toISOString()
   };
 }
+function jeMobitel(){ return (navigator.maxTouchPoints||0) > 0 && /iPad|iPhone|iPod|Android|Macintosh/.test(navigator.userAgent); }
 function printaj(){
   spremiArhivu(true);
+  if(jeMobitel()) { podijeliPonudu(); return; }
   window.print();
+}
+// ---- PDF (11.11.2026): pravi PDF umjesto HTML-a ----
+let __pdfLib = null;
+function ucitajPdfLib(){
+  if(window.html2pdf) return Promise.resolve();
+  if(__pdfLib) return __pdfLib;
+  __pdfLib = new Promise((res,rej)=>{
+    const sc=document.createElement("script");
+    sc.src="/html2pdf.bundle.min.js";
+    sc.onload=()=>res(); sc.onerror=()=>{ __pdfLib=null; rej(new Error("Ne mogu učitati PDF modul (provjeri internet).")); };
+    document.head.appendChild(sc);
+  });
+  return __pdfLib;
+}
+function pdfPoruka(t){
+  let el=document.getElementById("pdfmsg");
+  if(!el){ el=document.createElement("div"); el.id="pdfmsg";
+    el.style.cssText="position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:12px 18px;border-radius:8px;font:600 14px Arial;z-index:9999;box-shadow:0 6px 20px rgba(0,0,0,.3)";
+    document.body.appendChild(el); }
+  el.textContent=t; el.style.display=t?"block":"none";
+}
+async function napraviPdf(){
+  pdfPoruka("Izrađujem PDF…");
+  try{
+    await ucitajPdfLib();
+    render();
+    const izvor=document.getElementById("sheet");
+    const kopija=izvor.cloneNode(true);
+    kopija.removeAttribute("id");
+    kopija.style.cssText="width:194mm;min-height:0;padding:0;box-shadow:none;margin:0;background:#fff";
+    const blob = await html2pdf().set({
+      margin:[8,8,10,8],
+      image:{type:"jpeg",quality:0.95},
+      html2canvas:{scale:2,backgroundColor:"#ffffff",useCORS:true,scrollX:0,scrollY:0},
+      jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},
+      pagebreak:{mode:["css"],avoid:["tr",".totals",".foot",".nap",".box",".sign",".top"]}
+    }).from(kopija).outputPdf("blob");
+    return new File([blob], imeDatotekePonude(), {type:"application/pdf"});
+  } finally { pdfPoruka(""); }
+}
+function preuzmiFile(file){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(file); a.download=file.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 60000);
+}
+function pdfSpremanDijalog(file){
+  let d=document.getElementById("pdfdlg"); if(d) d.remove();
+  d=document.createElement("div"); d.id="pdfdlg";
+  d.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:10000";
+  d.innerHTML='<div style="background:#fff;border-radius:10px;padding:20px;width:290px;font-family:Arial;text-align:center">'+
+    '<div style="font-weight:700;font-size:16px;margin-bottom:6px">PDF je spreman</div>'+
+    '<div style="font-size:12px;color:#555;margin-bottom:14px;word-break:break-all">'+file.name+'</div>'+
+    '<button id="pdfdlg-sh" class="btn btn-red" style="margin-top:0">Podijeli</button>'+
+    '<button id="pdfdlg-dl" class="btn btn-g">Preuzmi</button>'+
+    '<button id="pdfdlg-x" class="btn" style="width:100%;margin-top:8px;background:#eee;color:#333">Zatvori</button></div>';
+  document.body.appendChild(d);
+  d.querySelector("#pdfdlg-x").onclick=()=>d.remove();
+  d.querySelector("#pdfdlg-dl").onclick=()=>{ preuzmiFile(file); d.remove(); };
+  d.querySelector("#pdfdlg-sh").onclick=async()=>{
+    try{ await navigator.share({files:[file], title:file.name}); d.remove(); }
+    catch(e){ if(e && e.name==="AbortError") return; preuzmiFile(file); d.remove(); }
+  };
+  if(!(navigator.canShare && navigator.canShare({files:[file]}))) d.querySelector("#pdfdlg-sh").style.display="none";
 }
 function imeDatotekePonude(){
   const br = (val("broj")||"ponuda").replace(/[^\w\-]+/g,"_");
   const kup = (val("kupac")||"").replace(/[^\w\-]+/g,"_").slice(0,40);
-  return (kup ? br+"_"+kup : br) + ".html";
+  return (kup ? br+"_"+kup : br) + ".pdf";
 }
 function htmlGotovePonude(){
   const sheet = document.getElementById("sheet").innerHTML;
@@ -520,31 +586,22 @@ td{padding:5px;border-bottom:1px solid #e6e6e6;vertical-align:top}
 .iban{font-weight:700;letter-spacing:.3px}
 </style></head><body>${sheet}</body></html>`;
 }
-function preuzmiPonudu(){
+async function preuzmiPonudu(){
   spremiArhivu(true);
-  const blob = new Blob([htmlGotovePonude()], {type:"text/html;charset=utf-8"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = imeDatotekePonude();
-  a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+  try{ preuzmiFile(await napraviPdf()); }
+  catch(e){ alert(e.message||e); }
 }
 async function podijeliPonudu(){
   spremiArhivu(true);
-  const blob = new Blob([htmlGotovePonude()], {type:"text/html;charset=utf-8"});
-  const file = new File([blob], imeDatotekePonude(), {type:"text/html"});
-  const tekst = "Ponuda "+(val("broj")||"")+" — "+(val("kupac")||"PORTON");
-  try{
-    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({title:tekst, text:tekst, files:[file]});
-      return;
-    }
-    if(navigator.share){
-      await navigator.share({title:tekst, text:tekst});
-      return;
-    }
-  }catch(e){ if(e && e.name==="AbortError") return; }
-  preuzmiPonudu();
+  let file;
+  try{ file = await napraviPdf(); } catch(e){ alert(e.message||e); return; }
+  if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file], title:file.name}); return; }
+    catch(e){ if(e && e.name==="AbortError") return; }
+    pdfSpremanDijalog(file);   // iOS traži novi dodir nakon izrade PDF-a
+    return;
+  }
+  pdfSpremanDijalog(file);
 }
 function otvoriPonudu(broj){
   ucitajArhivu().then(list=>{
