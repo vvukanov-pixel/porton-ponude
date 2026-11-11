@@ -610,6 +610,9 @@ function novaPonuda(){
 function noviBroj(){ document.getElementById("broj").value = nextBroj(); render(); }
 function dodaj(){ stavke.push(prazna()); paintStavke(); render(); }
 function del(i){ stavke.splice(i,1); paintStavke(); render(); }
+function oznaci(el){
+  setTimeout(()=>{ try{ el.setSelectionRange(0, el.value.length); }catch(e){ el.select(); } }, 0);
+}
 function setT(i,f,v){
   stavke[i][f]=v;
   render();
@@ -670,9 +673,9 @@ function paintStavke(){
       <label>Dekor</label>
       <select onchange="setS(${i},'dekor',this.value)">${ds.map(d=>`<option ${s.dekor===d?"selected":""}>${d}</option>`).join("")}</select>
       <div class="row3">
-        <div><label>Širina</label><input value="${s.sirina}" oninput="setT(${i},'sirina',this.value)"></div>
-        <div><label>Visina</label><input value="${s.visina}" oninput="setT(${i},'visina',this.value)"></div>
-        <div><label>Kom</label><input type="number" value="${s.kom}" oninput="setT(${i},'kom',this.value)"></div>
+        <div><label>Širina</label><input inputmode="numeric" onfocus="oznaci(this)" value="${s.sirina}" oninput="setT(${i},'sirina',this.value)"></div>
+        <div><label>Visina</label><input inputmode="numeric" onfocus="oznaci(this)" value="${s.visina}" oninput="setT(${i},'visina',this.value)"></div>
+        <div><label>Kom</label><input inputmode="numeric" onfocus="oznaci(this)" value="${s.kom}" oninput="setT(${i},'kom',this.value)"></div>
       </div>
       ${needStok?`<label>Štok mm</label><select onchange="setS(${i},'stok',this.value)">${STOK.map(t=>`<option ${s.stok===t?"selected":""}>${t}</option>`).join("")}</select>`:""}
       <label style="margin-top:6px"><input type="checkbox" ${s.dvokrilna?"checked":""} onchange="setS(${i},'dvokrilna',this.checked)"> Dvokrilna (cijena × 2)</label>
