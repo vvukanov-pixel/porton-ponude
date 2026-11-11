@@ -112,7 +112,7 @@
 <div class="app">
   <aside class="panel">
     <h1>PORTON PONUDE</h1>
-    <p class="sub">Cjenik 2026/2027 · verzija 11.11. 20:20</p>
+    <p class="sub">Cjenik 2026/2027 · verzija 11.11. 22:20</p>
 
     <label>Broj ponude</label>
     <div class="row2">
@@ -517,22 +517,52 @@ function pdfPoruka(t){
 }
 async function napraviPdf(){
   pdfPoruka("Izrađujem PDF…");
+  let omot=null;
   try{
     await ucitajPdfLib();
     render();
-    const izvor=document.getElementById("sheet");
-    const kopija=izvor.cloneNode(true);
+    const M_L=8, M_T=8, M_B=10, SIR=194, VIS=297-M_T-M_B;   // mm
+    omot=document.createElement("div");
+    omot.style.cssText="position:absolute;left:-10000px;top:0;width:"+SIR+"mm;background:#fff";
+    const kopija=document.getElementById("sheet").cloneNode(true);
     kopija.removeAttribute("id");
-    kopija.style.cssText="width:194mm;min-height:0;padding:0;box-shadow:none;margin:0;background:#fff";
-    const blob = await html2pdf().set({
-      margin:[8,8,10,8],
-      image:{type:"jpeg",quality:0.95},
-      html2canvas:{scale:2,backgroundColor:"#ffffff",useCORS:true,scrollX:0,scrollY:0},
-      jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},
-      pagebreak:{mode:["css"],avoid:["tr",".totals",".foot",".nap",".box",".sign",".top"]}
-    }).from(kopija).outputPdf("blob");
+    kopija.style.cssText="width:"+SIR+"mm;min-height:0;padding:0;box-shadow:none;margin:0;background:#fff";
+    const memo=kopija.querySelector(".memo"); if(memo) memo.style.marginBottom="8mm";
+    omot.appendChild(kopija); document.body.appendChild(omot);
+    await new Promise(r=>setTimeout(r,50));
+    // mjesta gdje se smije prelomiti stranica (donji rub redaka i blokova)
+    const vrh=kopija.getBoundingClientRect().top;
+    const sirPx=kopija.getBoundingClientRect().width;
+    const ukPx=kopija.scrollHeight;
+    const rezovi=[...kopija.querySelectorAll("tr, .memo, .top, .totals, .nap, .sign, h2, .kupac")]
+      .map(e=>Math.ceil(e.getBoundingClientRect().bottom-vrh)+2).filter(y=>y>0&&y<ukPx).sort((a,b)=>a-b);
+    const canvas = await html2pdf().set({
+      margin:[M_T,M_L,M_B,M_L], jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},
+      html2canvas:{scale:2,backgroundColor:"#ffffff",scrollX:0,scrollY:0}
+    }).from(kopija).toCanvas().get("canvas");
+    const k = canvas.width / sirPx;                 // px platna po CSS px
+    const strPx = VIS/SIR*sirPx;                     // visina stranice u CSS px
+    const pdf = await html2pdf().set({margin:0,jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}})
+      .from('<div style="width:10px;height:1px;background:#fff"></div>',"string").toPdf().get("pdf");   // prazna A4 stranica
+    let y=0, prva=true;
+    const kraj = Math.min(ukPx, canvas.height/k);
+    while(y < kraj-1){
+      let do_ = y+strPx;
+      if(do_ < kraj){
+        const ok = rezovi.filter(r=>r>y+20 && r<=do_);
+        if(ok.length) do_ = ok[ok.length-1];
+      } else do_ = kraj;
+      const hPx=Math.round((do_-y)*k);
+      const c=document.createElement("canvas"); c.width=canvas.width; c.height=hPx;
+      const g=c.getContext("2d"); g.fillStyle="#fff"; g.fillRect(0,0,c.width,c.height);
+      g.drawImage(canvas,0,Math.round(y*k),canvas.width,hPx,0,0,canvas.width,hPx);
+      if(!prva) pdf.addPage();
+      pdf.addImage(c.toDataURL("image/jpeg",0.95),"JPEG",M_L,M_T,SIR,(do_-y)*SIR/sirPx);
+      prva=false; y=do_;
+    }
+    const blob = pdf.output("blob");
     return new File([blob], imeDatotekePonude(), {type:"application/pdf"});
-  } finally { pdfPoruka(""); }
+  } finally { if(omot) omot.remove(); pdfPoruka(""); }
 }
 function preuzmiFile(file){
   const a=document.createElement("a");
