@@ -83,7 +83,7 @@
     .arch-item b { display:block; font-size:12px; }
     .arch-item span { color:#c9c9d4; font-size:11px; }
     .arch-item .row2 { margin-top:6px; }
-    @media (max-width: 980px) { .app { grid-template-columns: 1fr; } .panel { max-height: none; } }
+    @media (max-width: 980px) { .app { grid-template-columns: minmax(0,1fr); } .panel { max-height: none; } .preview { overflow-x: auto; justify-content: flex-start; } }
   </style>
 <script>
 // 05.11.2026: pristup preko linka (?k=... ili #k=...). Ključ se pamti i ostaje u adresi, pa rade i oznake i ikona na iPadu/mobitelu.
@@ -112,7 +112,7 @@
 <div class="app">
   <aside class="panel">
     <h1>PORTON PONUDE</h1>
-    <p class="sub">Cjenik 2026/2027 · print spreman</p>
+    <p class="sub">Cjenik 2026/2027 · verzija 11.11. 20:20</p>
 
     <label>Broj ponude</label>
     <div class="row2">
