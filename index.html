@@ -112,7 +112,7 @@
 <div class="app">
   <aside class="panel">
     <h1>PORTON PONUDE</h1>
-    <p class="sub">Cjenik 2026/2027 · verzija 12.11. 12:45</p>
+    <p class="sub">Cjenik 2026/2027 · verzija 26.11. 13:30</p>
 
     <label>Broj ponude</label>
     <div class="row2">
@@ -172,7 +172,8 @@
       <div class="ok" style="margin:6px 0">Ključ upiši jednom na svakom uređaju (pamti se). Bez ključa arhiva se ne može otvoriti.</div>
       <label>Tvoje ime (vidi se u arhivi tko je radio ponudu)</label>
       <input id="mojeime" placeholder="npr. Vedran" onchange="snimiIme()" />
-      <input id="trazi" style="margin-top:8px" placeholder="Traži kupca, broj ponude ili ime" oninput="prikaziArhivu()" />
+      <div id="arhStatus" class="ok" style="margin-top:8px"></div>
+      <input id="trazi" style="margin-top:8px" placeholder="Traži kupca, broj, mjesto ili ime (bilo kojim redom)" oninput="prikaziArhivu()" />
       <div id="arhiva"></div>
     </div>
 
@@ -435,7 +436,7 @@ function snimiFbKljuc(){
   const k = (document.getElementById("fbkljuc").value||"").trim();
   if(k && !/^p_[A-Za-z0-9]{24}$/.test(k)){ alert("Ključ nije ispravan (mora počinjati s p_ i imati 26 znakova)."); return; }
   localStorage.setItem(FB_KLJUC, k);
-  prikaziArhivu();
+  posaljiLokalneUOblak().then(prikaziArhivu);
 }
 function snimiFbUrl(){
   const u = (document.getElementById("fburl").value||"").trim().replace(/\/+$/,"");
@@ -451,13 +452,68 @@ async function ucitajArhivu(tiho){
     const r = await fetch(u + "/ponude.json");
     if(!r.ok) throw new Error(r.status);
     const data = await r.json();
-    if(!data) return [];
-    if(Array.isArray(data)) return data;
-    return Object.values(data);
+    const oblak = !data ? [] : (Array.isArray(data) ? data.filter(Boolean) : Object.values(data));
+    // 26.11.2026: dodaj i ponude koje su ostale samo na ovom uređaju (nisu u oblaku)
+    const lok = lokalnaArhiva();
+    const uOblaku = new Set(oblak.map(o=>o.id||("b:"+o.broj)));
+    const brojevi = new Set(oblak.map(o=>o.broj));
+    lok.forEach(o=>{ if(!uOblaku.has(o.id||("b:"+o.broj)) && !brojevi.has(o.broj)) oblak.push(Object.assign({}, o, {_lokalno:true})); });
+    return oblak;
   }catch(e){
     if(!tiho) alert("Oblak nije dostupan. Provjeri internet.");
-    return [];
+    return lokalnaArhiva().map(o=>Object.assign({}, o, {_lokalno:true}));
   }
+}
+function lokalnaArhiva(){ try { return JSON.parse(localStorage.getItem(ARH_KEY)||"[]"); } catch(e){ return []; } }
+function spremiLokalno(o){
+  try{
+    const list = lokalnaArhiva();
+    const i = list.findIndex(x => (o.id && x.id === o.id) || x.broj === o.broj);
+    if(i>=0) list[i]=o; else list.unshift(o);
+    localStorage.setItem(ARH_KEY, JSON.stringify(list.slice(0,500)));
+  }catch(e){}
+}
+function arhStatus(t, los){
+  const el=document.getElementById("arhStatus"); if(!el) return;
+  el.className = los ? "warn" : "ok"; el.textContent = t;
+}
+function sat(){ const d=new Date(); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+// pošalji u oblak ponude koje su spremljene samo na ovom uređaju
+async function posaljiLokalneUOblak(){
+  const u = fbUrl(); if(!u) return;
+  try{
+    const r = await fetch(u + "/ponude.json"); if(!r.ok) return;
+    const data = await r.json() || {};
+    const oblak = Array.isArray(data) ? data.filter(Boolean) : Object.values(data);
+    const ids = new Set(oblak.map(o=>o.id).filter(Boolean));
+    const brojevi = new Set(oblak.map(o=>o.broj));
+    for(const o of lokalnaArhiva()){
+      if(!o || (o.id && ids.has(o.id)) || brojevi.has(o.broj)) continue;
+      if(!o.broj) continue;
+      await fetch(u + "/ponude/" + kljucPonude(o.broj) + ".json", {method:"PUT", headers:{"Content-Type":"application/json"}, body: JSON.stringify(o)});
+    }
+  }catch(e){}
+}
+// ---- automatsko spremanje (26.11.2026): svaka ponuda s upisanim kupcem sama ide u arhivu ----
+let __autoT = null, __zadnjeSpremljeno = "";
+function otisak(o){ const c=Object.assign({}, o); delete c.saved; delete c.izradio; return JSON.stringify(c); }
+function spremiOdmah(){
+  if(!__autoT) return;
+  clearTimeout(__autoT); __autoT=null;
+  const o = stanjePonude();
+  if((o.kupac||"").trim() && o.broj && otisak(o) !== __zadnjeSpremljeno) spremiArhivu(true);
+}
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="hidden") spremiOdmah(); });
+window.addEventListener("pagehide", spremiOdmah);
+function autoSpremi(){
+  clearTimeout(__autoT);
+  __autoT = setTimeout(()=>{
+    __autoT = null;
+    const o = stanjePonude();
+    if(!(o.kupac||"").trim() || !o.broj) return;
+    if(otisak(o) === __zadnjeSpremljeno) return;
+    spremiArhivu(true);
+  }, 2500);
 }
 function kljucPonude(broj){
   return String(broj||"bez").replace(/[^A-Za-z0-9_-]/g,"_");
@@ -468,12 +524,12 @@ async function spremiArhivu(tiho){
     if(!tiho) alert("Nema što spremiti.");
     return;
   }
+  if(!o.broj){ await postaviNoviBroj(); o.broj = val("broj"); }
+  __zadnjeSpremljeno = otisak(o);
+  spremiLokalno(o);
   const u = fbUrl();
   if(!u){
-    const list = JSON.parse(localStorage.getItem(ARH_KEY)||"[]");
-    const i = list.findIndex(x => x.broj === o.broj);
-    if(i>=0) list[i]=o; else list.unshift(o);
-    localStorage.setItem(ARH_KEY, JSON.stringify(list));
+    arhStatus("⚠ Spremljeno samo na ovom uređaju ("+sat()+") — upiši ključ arhive da ide u zajedničku arhivu.", true);
     const _fb=localStorage.getItem(FB_KEY)||"";
 const _el=document.getElementById("fburl");
 if(_el && _fb) _el.value=_fb;
@@ -490,6 +546,7 @@ prikaziArhivu();
         const stari = o.broj;
         o.broj = await sljedeciBrojOblak();
         document.getElementById("broj").value = o.broj; render();
+        __zadnjeSpremljeno = otisak(o); spremiLokalno(o);
         if(!tiho) alert("Broj "+stari+" je već zauzeo drugi korisnik — ova ponuda je spremljena kao "+o.broj+".");
       }
     }catch(e){}
@@ -499,10 +556,12 @@ prikaziArhivu();
       body: JSON.stringify(o)
     });
     if(!r.ok) throw new Error(r.status);
+    arhStatus("✓ U arhivi: " + o.broj + (o.kupac?" — "+o.kupac:"") + " ("+sat()+")");
     await prikaziArhivu();
     if(!tiho) alert("Spremljeno u oblak: " + o.broj + (o.kupac?" — "+o.kupac:""));
   }catch(e){
-    alert("Spremanje u oblak nije uspjelo. Provjeri ključ arhive.");
+    arhStatus("⚠ Oblak nije dostupan — ponuda spremljena na ovom uređaju, poslat će se u arhivu kad se otvori s internetom.", true);
+    if(!tiho) alert("Spremanje u oblak nije uspjelo. Ponuda je spremljena na ovom uređaju.");
   }
 }
 function stanjePonude(){
@@ -672,6 +731,7 @@ async function podijeliPonudu(){
   pdfSpremanDijalog(file);
 }
 function otvoriPonudu(broj){
+  spremiOdmah();
   ucitajArhivu().then(list=>{
     const o = list.find(x => x.broj === broj);
     if(!o) return;
@@ -684,6 +744,7 @@ function otvoriPonudu(broj){
     stavke = (o.stavke || []).map(s=>({...s, dvokrilna: !!s.dvokrilna}));
     paintStavke();
     render();
+    __zadnjeSpremljeno = otisak(stanjePonude());
     window.scrollTo(0,0);
   });
 }
@@ -692,26 +753,34 @@ async function obrisiPonudu(broj){
   const u = fbUrl();
   if(u){
     await fetch(u + "/ponude/" + kljucPonude(broj) + ".json", { method: "DELETE" });
+    try{ localStorage.setItem(ARH_KEY, JSON.stringify(lokalnaArhiva().filter(x=>x.broj!==broj))); }catch(e){}
   } else {
     const list = JSON.parse(localStorage.getItem(ARH_KEY)||"[]").filter(x=>x.broj!==broj);
     localStorage.setItem(ARH_KEY, JSON.stringify(list));
   }
   prikaziArhivu();
 }
+// bez kvačica, mala slova, jedan razmak: "Maslać  Anica" → "maslac anica"
+function normTekst(t){
+  return String(t||"").toLowerCase().replace(/đ/g,"d").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9\-\.]+/g," ").trim();
+}
 async function prikaziArhivu(){
   const box = document.getElementById("arhiva");
   if(!box) return;
-  const q = (document.getElementById("trazi").value||"").toLowerCase().trim();
+  const rijeci = normTekst(document.getElementById("trazi").value).split(" ").filter(Boolean);
   let list = await ucitajArhivu();
   list.sort((a,b)=> (b.saved||"").localeCompare(a.saved||""));
-  if(q) list = list.filter(o => (o.broj||"").toLowerCase().includes(q) || (o.kupac||"").toLowerCase().includes(q) || (o.izradio||"").toLowerCase().includes(q));
+  if(rijeci.length) list = list.filter(o => {
+    const sve = normTekst([o.broj,o.kupac,o.grad,o.izradio,o.datum,o.napomena].join(" "));
+    return rijeci.every(w => sve.includes(w));
+  });
   if(!list.length){
     box.innerHTML = '<div class="warn" style="margin-top:8px">Nema ponuda u arhivi.</div>';
     return;
   }
   box.innerHTML = list.map(o=>`<div class="arch-item">
     <b>${o.broj||"—"}</b>
-    <span>${o.kupac||"bez kupca"} · ${o.datum||""} · stavki ${(o.stavke||[]).length}${o.izradio?" · "+o.izradio:""}</span>
+    <span>${o.kupac||"bez kupca"} · ${o.datum||""} · stavki ${(o.stavke||[]).length}${o.izradio?" · "+o.izradio:""}${o._lokalno?' · <span style="color:#ffb4b4">samo na ovom uređaju</span>':""}</span>
     <div class="row2">
       <button class="btn btn-g" onclick="otvoriPonudu('${String(o.broj||"").replace(/'/g,"")}');">Otvori</button>
       <button class="btn btn-del" onclick="obrisiPonudu('${String(o.broj||"").replace(/'/g,"")}');">Obriši</button>
@@ -720,6 +789,7 @@ async function prikaziArhivu(){
 }
 
 function novaPonuda(){
+  spremiOdmah();
   document.getElementById("kupac").value = "";
   document.getElementById("pravna").checked = false;
   document.getElementById("napomena").value = "";
@@ -814,6 +884,7 @@ function paintStavke(){
 }
 
 function render(){
+  autoSpremi();
   osvjeziCijene();
   const markup=(Number(val("postotak"))||0)/100;
   const rows=stavke.map(s=>{
@@ -922,6 +993,7 @@ try{ document.getElementById("mojeime").value = mojeIme(); }catch(e){}
 paintStavke();
 render();
 postaviNoviBroj();
+posaljiLokalneUOblak().then(prikaziArhivu);
 </script>
 </body>
 </html>
